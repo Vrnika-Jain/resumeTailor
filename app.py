@@ -124,53 +124,59 @@ def sanitize(text: str) -> str:
         .replace("\u2122", "(TM)")
     )
 
-
 def build_pdf(data: dict) -> bytes:
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_margins(18, 16, 18)
-    pdf.set_auto_page_break(auto=True, margin=16)
+    pdf.set_margins(15, 15, 15)
+    pdf.set_auto_page_break(auto=True, margin=15)
 
-    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_font("Helvetica", "B", 20)
     pdf.set_text_color(15, 15, 15)
-    pdf.cell(0, 12, sanitize(data["name"]), ln=True, align="C")
+    pdf.set_x(20)
+    pdf.cell(0, 10, sanitize(data["name"]), ln=True, align="C")
 
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(90, 90, 90)
+    pdf.set_x(20)
     pdf.cell(0, 5, sanitize(data["contact"]), ln=True, align="C")
 
-    pdf.ln(3)
+    pdf.ln(2)
     pdf.set_draw_color(15, 15, 15)
     pdf.set_line_width(0.8)
-    pdf.line(18, pdf.get_y(), 192, pdf.get_y())
-    pdf.ln(5)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(4)
 
     for sec in data["sections"]:
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(15, 15, 15)
+        pdf.set_x(pdf.l_margin)
         pdf.cell(0, 6, sanitize(sec["title"]), ln=True)
 
         pdf.set_draw_color(180, 180, 180)
         pdf.set_line_width(0.3)
-        pdf.line(18, pdf.get_y(), 192, pdf.get_y())
+        pdf.line(20, pdf.get_y(), 190, pdf.get_y())
         pdf.ln(3)
 
         for line in sec["lines"]:
-            if line.startswith("ROLE:"):
-                pdf.set_font("Helvetica", "B", 10)
-                pdf.set_text_color(15, 15, 15)
-                pdf.multi_cell(0, 6, sanitize(line.replace("ROLE:", "").strip()))
-            elif line.startswith("- "):
-                pdf.set_font("Helvetica", "", 9.5)
-                pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(165, 5.2, "-  " + sanitize(line[2:]))
-            else:
-                pdf.set_font("Helvetica", "", 9.5)
-                pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(0, 5.2, sanitize(line))
-
-        pdf.ln(5)
-
+            try:
+                pdf.set_x(20)
+                if line.startswith("ROLE:"):
+                    pdf.set_font("Helvetica", "B", 10)
+                    pdf.set_text_color(15, 15, 15)
+                    pdf.multi_cell(170, 6, sanitize(line.replace("ROLE:", "").strip()))
+                elif line.startswith("- "):
+                    pdf.set_font("Helvetica", "", 9.5)
+                    pdf.set_text_color(40, 40, 40)
+                    pdf.multi_cell(170, 5, "-  " + sanitize(line[2:]))
+                else:
+                    pdf.set_font("Helvetica", "", 9.5)
+                    pdf.set_text_color(40, 40, 40)
+                    pdf.multi_cell(170, 5, sanitize(line))
+            except Exception as e:
+                print(f"PROBLEM LINE: '{line}'")
+                print(f"ERROR: {e}")
+                raise
+        pdf.ln(4)
     return bytes(pdf.output())
 
 def build_docx(data: dict) -> bytes:
