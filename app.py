@@ -23,7 +23,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ── Colors ────────────────────────────────────────────────────────────────────
 BLUE     = (27, 79, 138)
 DARK     = (20, 20, 20)
 GRAY     = (100, 100, 100)
@@ -47,7 +46,7 @@ def sanitize(text: str) -> str:
         .replace("\u2122", "(TM)")
     )
 
-def tailor_with_groq(resume: str, jd: str, api_key: str, website: str = "", publication: str = "") -> str:
+def tailor_with_groq(resume: str, jd: str, api_key: str) -> str:
     key = (
         api_key.strip()
         or st.secrets.get("GROQ_API_KEY", "")
@@ -57,12 +56,6 @@ def tailor_with_groq(resume: str, jd: str, api_key: str, website: str = "", publ
         raise ValueError("No API key provided.")
 
     client = Groq(api_key=key)
-
-    extra = ""
-    if website.strip():
-        extra += f"\nCandidate website: {website.strip()}"
-    if publication.strip():
-        extra += f"\nCandidate publication: {publication.strip()}"
 
     prompt = f"""You are an expert resume writer and ATS optimization specialist.
 
@@ -127,11 +120,9 @@ INSTRUCTIONS:
 4. Only include projects whose TECH stack is relevant to the job description.
 5. Do NOT invent experience - only reframe existing experience.
 6. Use strong action verbs. Be concise and impactful.
-7. Always include website and publication if provided.
+7. If the candidate's resume contains a website, portfolio link, or publication, always include them in the output.
 8. Keep Internship Experience section until experience exceeds 3 years.
 9. Keep Accomplishments section until experience exceeds 3 years.
-
-ADDITIONAL CANDIDATE INFO:{extra}
 
 CANDIDATE RESUME:
 {resume}
@@ -689,18 +680,6 @@ with col2:
         placeholder="Paste the full job posting here."
     )
 
-col3, col4 = st.columns(2)
-with col3:
-    website_input = st.text_input(
-        "Personal website / portfolio",
-        placeholder="https://yourname.canva.site/"
-    )
-with col4:
-    publication_input = st.text_input(
-        "Publication (title | link)",
-        placeholder="ML Techniques Paper | https://ijfmr.com/..."
-    )
-
 if st.button("✨ Tailor my resume", type="primary", use_container_width=True):
     if not has_key and not api_key.strip():
         st.error("Please enter your Groq API key.")
@@ -711,10 +690,8 @@ if st.button("✨ Tailor my resume", type="primary", use_container_width=True):
     else:
         with st.spinner("Tailoring your resume..."):
             try:
-                tailored_text = tailor_with_groq(
-                    resume_input, jd_input, api_key,
-                    website_input, publication_input
-                )
+                tailored_text = tailor_with_groq(resume_input, jd_input, api_key)
+                
                 data       = parse_resume(tailored_text)
                 pdf_bytes  = build_pdf(data)
                 docx_bytes = build_docx(data)
