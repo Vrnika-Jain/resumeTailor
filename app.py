@@ -163,7 +163,6 @@ def build_pdf(data: dict) -> bytes:
             elif line.startswith("- "):
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(40, 40, 40)
-                pdf.set_x(pdf.get_x() + 5)
                 pdf.multi_cell(165, 5.2, "-  " + sanitize(line[2:]))
             else:
                 pdf.set_font("Helvetica", "", 9.5)
