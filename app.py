@@ -177,44 +177,30 @@ def build_pdf(data: dict) -> bytes:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_margins(20, 20, 20)
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=20)
     W = pdf.w - 40
 
-    # pdf.set_xy(20, 20)
+    pdf.set_xy(20, 20)
     pdf.set_font("Helvetica", "B", 20)
     pdf.set_text_color(*DARK)
     pdf.cell(W, 10, sanitize(data["name"]), ln=True)
 
     meta = data.get("meta", "")
-    # if meta.startswith("Gender:"):
-    #     parts = [p.strip() for p in meta.split("|")]
-    #     meta_clean = "  ".join(parts)
-    #     pdf.set_font("Helvetica", "B", 8.5)
-    #     pdf.set_text_color(*DARK)
-    #     pdf.set_x(20)
-    #     pdf.cell(W, 5, sanitize(meta_clean), ln=True)
-    if meta:
+    if meta.startswith("GENDER:"):
         parts = [p.strip() for p in meta.split("|")]
-        formatted_parts = []
-
-        for p in parts:
-            if ":" in p:
-                key, val = p.split(":", 1)
-                key = key.strip().capitalize()
-                val = val.strip().capitalize()
-                formatted_parts.append(f"{key}: {val}")
-
-        pdf.set_font("Helvetica", "", 9)
+        meta_clean = "  ".join(parts)
+        pdf.set_font("Helvetica", "B", 8.5)
         pdf.set_text_color(*DARK)
-        pdf.multi_cell(W, 5, "   |   ".join(formatted_parts))
+        pdf.set_x(20)
+        pdf.cell(W, 5, sanitize(meta_clean), ln=True)
 
     contact = data.get("contact", "")
     contact_parts = [c.strip() for c in contact.split("|")]
     pdf.set_font("Helvetica", "", 8.5)
     pdf.set_text_color(*GRAY)
-    # pdf.set_x(20)
+    pdf.set_x(20)
     pdf.cell(W, 5, sanitize("  |  ".join(contact_parts)), ln=True)
-        
+
     pdf.ln(2)
     pdf.set_draw_color(*BLUE)
     pdf.set_line_width(0.8)
@@ -222,7 +208,7 @@ def build_pdf(data: dict) -> bytes:
     pdf.ln(5)
 
     for sec in data["sections"]:
-        # pdf.set_x(20)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(*DARK)
         pdf.cell(W, 6, sanitize(sec["title"]), ln=True)
@@ -236,10 +222,10 @@ def build_pdf(data: dict) -> bytes:
         lines = sec["lines"]
         while i < len(lines):
             line = lines[i]
-            # pdf.set_x(20)
+            pdf.set_x(20)
 
-            if line.startswith("Date:"):
-                date_val = sanitize(line.replace("Date:", "").strip())
+            if line.startswith("DATE:"):
+                date_val = sanitize(line.replace("DATE:", "").strip())
                 role_val = ""
                 if i + 1 < len(lines) and lines[i+1].startswith("ROLE:"):
                     role_val = sanitize(lines[i+1].replace("ROLE:", "").strip())
@@ -257,7 +243,7 @@ def build_pdf(data: dict) -> bytes:
                 role_val = sanitize(line.replace("ROLE:", "").strip())
                 pdf.set_font("Helvetica", "B", 10)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(62)
+                pdf.set_x(62)
                 pdf.multi_cell(W - 42, 5, role_val)
                 i += 1
 
@@ -265,14 +251,14 @@ def build_pdf(data: dict) -> bytes:
                 grade_val = sanitize(line.replace("GRADE:", "").strip())
                 pdf.set_font("Helvetica", "", 9)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(62)
+                pdf.set_x(62)
                 pdf.multi_cell(W - 42, 5, "Grade: " + grade_val)
                 i += 1
 
             elif line.startswith("- "):
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(62)
+                pdf.set_x(62)
                 pdf.multi_cell(W - 42, 5, "-  " + sanitize(line[2:]))
                 i += 1
 
@@ -280,21 +266,21 @@ def build_pdf(data: dict) -> bytes:
                 proj_val = sanitize(line.replace("PROJECT:", "").strip())
                 pdf.set_font("Helvetica", "B", 10)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, proj_val)
                 i += 1
 
             elif line.startswith("DESC:"):
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, sanitize(line.replace("DESC:", "").strip()))
                 i += 1
 
             elif line.startswith("TECH:"):
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(*GRAY)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, "Technologies: " + sanitize(line.replace("TECH:", "").strip()))
                 i += 1
 
@@ -302,7 +288,7 @@ def build_pdf(data: dict) -> bytes:
                 link_val = sanitize(line.replace("LINK:", "").strip())
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(*BLUE)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, link_val)
                 i += 1
 
@@ -316,7 +302,7 @@ def build_pdf(data: dict) -> bytes:
                     i += 1
                 pdf.set_font("Helvetica", "B", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.cell(42, 5, cat_val, ln=False)
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
@@ -327,7 +313,7 @@ def build_pdf(data: dict) -> bytes:
                 parts = lang_val.split("|")
                 pdf.set_font("Helvetica", "B", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.cell(42, 5, parts[0].strip() if parts else "", ln=False)
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
@@ -339,7 +325,7 @@ def build_pdf(data: dict) -> bytes:
                 cert_val = sanitize(line.replace("CERT:", "").strip())
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, "-  " + cert_val)
                 i += 1
 
@@ -347,7 +333,7 @@ def build_pdf(data: dict) -> bytes:
                 accomp_val = sanitize(line.replace("ACCOMP:", "").strip())
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 pdf.multi_cell(W, 5, "-  " + accomp_val)
                 i += 1
 
@@ -355,7 +341,7 @@ def build_pdf(data: dict) -> bytes:
                 pub_val = sanitize(line.replace("PUB:", "").strip())
                 pdf.set_font("Helvetica", "", 9.5)
                 pdf.set_text_color(*DARK)
-                # pdf.set_x(20)
+                pdf.set_x(20)
                 parts = pub_val.split("|")
                 title = parts[0].strip() if parts else pub_val
                 link  = parts[1].strip() if len(parts) > 1 else ""
@@ -363,7 +349,7 @@ def build_pdf(data: dict) -> bytes:
                 if link:
                     pdf.set_font("Helvetica", "I", 9)
                     pdf.set_text_color(*BLUE)
-                    # pdf.set_x(20)
+                    pdf.set_x(20)
                     pdf.multi_cell(W, 5, "   " + link)
                 i += 1
 
@@ -373,7 +359,7 @@ def build_pdf(data: dict) -> bytes:
                 pdf.multi_cell(W, 5, sanitize(line))
                 i += 1
 
-            # pdf.set_x(20)
+            pdf.set_x(20)
 
         pdf.ln(4)
 
