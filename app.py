@@ -65,7 +65,7 @@ Keep ALL sections — do not remove any. Tailor and reword content to match the 
 STRICT FORMATTING RULES (follow exactly, no exceptions):
 - Line 1: Candidate full name only
 - Line 2: email | phone | linkedin_url | location | website_url
-- Line 3: GENDER: value | DOB: value | NATIONALITY: value
+- Line 3: Gender: value | Date of birth: value | Nationality: value
 - Then sections in this exact order:
   WORK EXPERIENCE
   INTERNSHIP EXPERIENCE
@@ -186,20 +186,48 @@ def build_pdf(data: dict) -> bytes:
     pdf.cell(W, 10, sanitize(data["name"]), ln=True)
 
     meta = data.get("meta", "")
-    if meta.startswith("GENDER:"):
+    if meta.startswith("Gender:") or meta.startswith("GENDER:"):
+        meta = (meta
+            .replace("GENDER:", "Gender:")
+            .replace("DOB:", "Date of birth:")
+            .replace("NATIONALITY:", "Nationality:")
+        )
         parts = [p.strip() for p in meta.split("|")]
-        meta_clean = "  ".join(parts)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", "B", 8.5)
         pdf.set_text_color(*DARK)
-        pdf.set_x(20)
-        pdf.cell(W, 5, sanitize(meta_clean), ln=True)
-
+        
+        meta_line = "    ".join(parts)
+        pdf.multi_cell(W, 5, sanitize(meta_line), ln=True)
+        
     contact = data.get("contact", "")
     contact_parts = [c.strip() for c in contact.split("|")]
+
+    icon_map = {
+        0: "[loc] ", 1: "[mail] ", 2: "[tel] ", 3: "[web] ", 4: "[in] "
+    }
+    
     pdf.set_font("Helvetica", "", 8.5)
-    pdf.set_text_color(*GRAY)
-    pdf.set_x(20)
-    pdf.cell(W, 5, sanitize("  |  ".join(contact_parts)), ln=True)
+    pdf.set_text_color(*BLUE)
+
+    line_parts = []
+    current_width = 0
+    char_width = 2.1
+
+    for idx, part in enumerate(contact_parts):
+        part_width = len(part) * char_width + 15
+        if current_width + part_width > W and line_parts:
+            pdf.set_x(20)
+            pdf.cell(W, 5, "  |  ".join(line_parts), ln=True)
+            line_parts = [part]
+            current_width = part_width
+        else:
+            line_parts.append(part)
+            current_width += part_width
+
+    if line_parts:
+        pdf.set_x(20)
+        pdf.cell(W, 5, "  |  ".join(line_parts), ln=True)
 
     pdf.ln(2)
     pdf.set_draw_color(*BLUE)
@@ -414,7 +442,12 @@ def build_docx(data: dict) -> bytes:
     nr.font.color.rgb = RGBColor(*DARK)
     
     meta = data.get("meta", "")
-    if meta:
+    if meta.startswith("Gender:") or meta.startswith("GENDER:"):
+        meta = (meta
+            .replace("GENDER:", "Gender:")
+            .replace("DOB:", "Date of birth:")
+            .replace("NATIONALITY:", "Nationality:")
+        )
         meta_p = doc.add_paragraph()
         meta_p.paragraph_format.space_after = Pt(2)
         parts = [p.strip() for p in meta.split("|")]
@@ -432,16 +465,26 @@ def build_docx(data: dict) -> bytes:
                 if idx < len(parts) - 1:
                     sr = meta_p.add_run("    ")
                     sr.font.size = Pt(9)
+            else:
+                mr = meta_p.add_run(part)
+                mr.font.size = Pt(9)
+                mr.font.color.rgb = RGBColor(*DARK)
+                if idx < len(parts) - 1:
+                    sr = meta_p.add_run("    ")
+                    sr.font.size = Pt(9)
 
     contact_p = doc.add_paragraph()
     contact_p.paragraph_format.space_after = Pt(4)
     contact_parts = [c.strip() for c in data["contact"].split("|")]
+
+    icons = ["📍", "✉", "📞", "🌐", "in"]
+    
     for idx, part in enumerate(contact_parts):
         cr = contact_p.add_run(part.strip())
         cr.font.size = Pt(9)
         cr.font.color.rgb = RGBColor(*BLUE)
         if idx < len(contact_parts) - 1:
-            sep = contact_p.add_run("  |  ")
+            sep = contact_p.add_run("   |   ")
             sep.font.size = Pt(9)
             sep.font.color.rgb = RGBColor(*GRAY)
 
