@@ -155,40 +155,49 @@ def generate_cover_letter(resume: str, jd: str, api_key: str) -> str:
 
     client = Groq(api_key=key)
 
-    prompt = f"""You are an expert cover letter writer.
+    prompt = f"""You are a talented professional writer who writes cover letters that sound
+genuinely human — not corporate, not templated, not robotic.
 
-TASK: Write a formal and professional cover letter tailored to the job description below.
-Base it entirely on the candidate's resume. Do not invent experience.
+TASK: Write a cover letter for the candidate below that feels personal, confident,
+and real. It should sound like a smart person wrote it themselves — not an AI.
 
 FORMATTING RULES (follow exactly):
 - Line 1: Candidate full name
 - Line 2: email | phone | location
 - Line 3: Today's date written out e.g. 10 April 2026
-- Line 4: blank
-- Line 5: Hiring Manager title and company name extracted from job description
-- Line 6: blank
-- Line 7: Dear Hiring Manager,
-- Line 8: blank
-- Then body paragraphs separated by blank lines
+- Line 4: Hiring Manager title and company name from job description
+- Line 5: blank
+- Line 6: Dear Hiring Manager,
+- Line 7: blank
+- Then body paragraphs separated by single blank lines
 - End with:
   Yours sincerely,
 
   [Candidate full name]
 
-INSTRUCTIONS:
-1. Opening paragraph: Express genuine interest in the specific role and company.
-   Mention the exact job title. Keep it concise and compelling.
-2. Middle paragraphs: Highlight 2-3 most relevant experiences or achievements
-   from the resume that directly match the job requirements.
-   Use specific numbers or outcomes where possible.
-   Reference keywords from the job description naturally.
-3. Closing paragraph: Summarise why you are a strong fit.
-   Express enthusiasm for an interview. Keep it confident but not arrogant.
-4. Tone: Formal, professional, and human. No buzzwords or clichés.
-5. Length: Let the content decide — write as many paragraphs as needed
-   to make a compelling case, but keep it to one page maximum.
-6. Do NOT use bullet points anywhere in the cover letter.
-7. Do NOT repeat the resume — tell a story instead.
+WRITING RULES (critical — follow every one):
+1. NO corporate buzzwords. Banned words: leverage, synergy, passionate,
+   excited to apply, dynamic, results-driven, self-starter, team player,
+   innovative, cutting-edge, fast-paced, pivotal, spearhead, rockstar,
+   circle back, touch base, move the needle, bandwidth, deep dive.
+2. Sound like a real person writing to another real person.
+   Conversational but professional. Confident but not arrogant.
+3. Opening: Do NOT start with "I am writing to apply for..."
+   Start with something that immediately shows you understand the role
+   or the company — a sharp observation, a relevant achievement, or
+   a direct statement of fit.
+4. Middle: Tell a specific story from your experience that directly
+   connects to what they need. Use real details from the resume.
+   One strong story beats three vague claims every time.
+5. Closing: Be direct. Say you want the job and why.
+   Ask for the interview naturally — not desperately.
+6. Length: 3-4 tight paragraphs MAX. Every sentence must earn its place.
+   If a sentence doesn't add something new — cut it.
+7. ONE page only — keep it short and punchy.
+8. No bullet points anywhere.
+9. Vary sentence length. Mix short punchy sentences with longer ones.
+   This makes it sound human.
+10. Do NOT repeat the resume. The letter should add context, not summarise.
 
 CANDIDATE RESUME:
 {resume}
@@ -248,7 +257,7 @@ def build_pdf(data: dict) -> bytes:
 
     # Name
     pdf.set_xy(20, 20)
-    pdf.set_font("Helvetica", "B", 20)
+    pdf.set_font("Helvetica", "B", 17)
     pdf.set_text_color(*DARK)
     pdf.cell(W, 10, sanitize(data["name"]), ln=True)
 
@@ -276,6 +285,9 @@ def build_pdf(data: dict) -> bytes:
     char_width  = 2.1
     line_parts  = []
     current_w   = 0
+    SECTION_GAP  = 3
+    LINE_HEIGHT  = 4.8
+    ROLE_HEIGHT  = 5
 
     for part in contact_parts:
         part_w = len(part) * char_width + 15
@@ -302,7 +314,7 @@ def build_pdf(data: dict) -> bytes:
     # Sections
     for sec in data["sections"]:
         pdf.set_x(20)
-        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_font("Helvetica", "B", 9.5)
         pdf.set_text_color(*DARK)
         pdf.cell(W, 6, sanitize(sec["title"]), ln=True)
         pdf.set_draw_color(*BLUE)
@@ -748,72 +760,86 @@ def build_docx(data: dict) -> bytes:
 def build_cover_letter_pdf(text: str) -> bytes:
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_margins(25, 25, 25)
-    pdf.set_auto_page_break(auto=True, margin=25)
-    W = pdf.w - 50
+    pdf.set_margins(22, 18, 22)
+    pdf.set_auto_page_break(auto=True, margin=18)
+    W = pdf.w - 44
 
     lines = text.split("\n")
+    idx   = 0
 
-    for idx, line in enumerate(lines):
-        line = sanitize(line.strip())
+    while idx < len(lines):
+        line = sanitize(lines[idx].strip())
 
         if idx == 0:
-            pdf.set_font("Helvetica", "B", 16)
+            pdf.set_xy(22, 18)
+            pdf.set_font("Helvetica", "B", 15)
             pdf.set_text_color(*DARK)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 8, line)
+            pdf.cell(W, 7, line, ln=True)
+            idx += 1
 
         elif idx == 1:
-            pdf.set_font("Helvetica", "", 9)
+            pdf.set_font("Helvetica", "", 8.5)
             pdf.set_text_color(*BLUE)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 5, line)
-            pdf.ln(2)
+            pdf.set_x(22)
+            pdf.cell(W, 5, line, ln=True)
+            pdf.ln(1)
             pdf.set_draw_color(*BLUE)
             pdf.set_line_width(0.5)
-            pdf.line(25, pdf.get_y(), pdf.w - 25, pdf.get_y())
-            pdf.ln(6)
+            pdf.line(22, pdf.get_y(), pdf.w - 22, pdf.get_y())
+            pdf.ln(5)
+            idx += 1
 
         elif idx == 2:
-            pdf.set_font("Helvetica", "", 9.5)
+            pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(*GRAY)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 5, line)
-            pdf.ln(2)
+            pdf.set_x(22)
+            pdf.cell(W, 5, line, ln=True)
+            idx += 1
+
+        elif idx == 3:
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(*DARK)
+            pdf.set_x(22)
+            pdf.cell(W, 5, line, ln=True)
+            pdf.ln(4)
+            idx += 1
 
         elif line == "":
-            pdf.ln(4)
+            pdf.ln(3)
+            idx += 1
 
         elif line.startswith("Dear"):
             pdf.set_font("Helvetica", "B", 10)
             pdf.set_text_color(*DARK)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 6, line)
+            pdf.set_x(22)
+            pdf.cell(W, 6, line, ln=True)
             pdf.ln(2)
+            idx += 1
 
         elif line.startswith("Yours sincerely") or line.startswith("Yours faithfully"):
-            pdf.ln(4)
+            pdf.ln(3)
             pdf.set_font("Helvetica", "", 10)
             pdf.set_text_color(*DARK)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 6, line)
+            pdf.set_x(22)
+            pdf.cell(W, 6, line, ln=True)
+            idx += 1
 
         else:
             pdf.set_font("Helvetica", "", 10)
             pdf.set_text_color(*DARK)
-            pdf.set_x(25)
-            pdf.multi_cell(W, 6, line)
+            pdf.set_x(22)
+            pdf.multi_cell(W, 5.5, line)
+            idx += 1
 
     return bytes(pdf.output())
-
 
 def build_cover_letter_docx(text: str) -> bytes:
     doc = Document()
     for sec in doc.sections:
-        sec.top_margin    = Cm(2.0)
-        sec.bottom_margin = Cm(2.0)
-        sec.left_margin   = Cm(2.5)
-        sec.right_margin  = Cm(2.5)
+        sec.top_margin    = Cm(1.5)
+        sec.bottom_margin = Cm(1.5)
+        sec.left_margin   = Cm(2.2)
+        sec.right_margin  = Cm(2.2)
 
     lines = text.split("\n")
 
@@ -822,23 +848,26 @@ def build_cover_letter_docx(text: str) -> bytes:
 
         if idx == 0:
             p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(2)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(1)
             r = p.add_run(line)
             r.bold = True
-            r.font.size = Pt(16)
+            r.font.size = Pt(15)
             r.font.color.rgb = RGBColor(*DARK)
 
         elif idx == 1:
             p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(4)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(3)
             r = p.add_run(line)
-            r.font.size = Pt(9)
+            r.font.size = Pt(8.5)
             r.font.color.rgb = RGBColor(*BLUE)
+            
             pPr = p._p.get_or_add_pPr()
             pBdr = OxmlElement('w:pBdr')
             bot = OxmlElement('w:bottom')
             bot.set(qn('w:val'), 'single')
-            bot.set(qn('w:sz'), '8')
+            bot.set(qn('w:sz'), '6')
             bot.set(qn('w:space'), '1')
             bot.set(qn('w:color'), BLUE_HEX)
             pBdr.append(bot)
@@ -846,19 +875,29 @@ def build_cover_letter_docx(text: str) -> bytes:
 
         elif idx == 2:
             p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(8)
-            p.paragraph_format.space_after  = Pt(4)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after  = Pt(0)
             r = p.add_run(line)
-            r.font.size = Pt(9.5)
+            r.font.size = Pt(9)
             r.font.color.rgb = RGBColor(*GRAY)
 
+        elif idx == 3:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(6)
+            r = p.add_run(line)
+            r.font.size = Pt(9)
+            r.font.color.rgb = RGBColor(*DARK)
+
         elif line == "":
-            doc.add_paragraph().paragraph_format.space_after = Pt(2)
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.space_before = Pt(0)
 
         elif line.startswith("Dear"):
             p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(4)
-            p.paragraph_format.space_after  = Pt(6)
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after  = Pt(4)
             r = p.add_run(line)
             r.bold = True
             r.font.size = Pt(10)
@@ -866,15 +905,16 @@ def build_cover_letter_docx(text: str) -> bytes:
 
         elif line.startswith("Yours sincerely") or line.startswith("Yours faithfully"):
             p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(12)
-            p.paragraph_format.space_after  = Pt(2)
+            p.paragraph_format.space_before = Pt(8)
+            p.paragraph_format.space_after  = Pt(1)
             r = p.add_run(line)
             r.font.size = Pt(10)
             r.font.color.rgb = RGBColor(*DARK)
 
         else:
             p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(6)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(4)
             r = p.add_run(line)
             r.font.size = Pt(10)
             r.font.color.rgb = RGBColor(*DARK)
